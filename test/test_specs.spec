@@ -1,0 +1,2 @@
+{suites, ".", all}.
+{logdir, "./logs/"}.

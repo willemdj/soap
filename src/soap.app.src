@@ -1,0 +1,7 @@
+{application,soap,
+ [{description,"Support for SOAP"},
+  {vsn,"1.0"},
+  {modules,[]},
+  {registered, []},
+  {env, []},
+  {applications,[kernel,stdlib]}]}.
