@@ -44,10 +44,21 @@ stop() ->
 -spec http_request(URL::string(), Message::iolist(), Options::any(),
                    [http_header()], Content_type::string()) -> http_response().
 http_request(URL, Request, Options, Headers, ContentType) ->
+    Timeout = proplists:get_value(timeout, Options),
     NewHeaders = [{"Content-Type", ContentType} | Headers],
-    NewOptions = [{response_format, binary} | Options],
+    NewOptions = [{response_format, binary} | proplists:delete(timeout, 
+                                                               Options)],
     Request_as_binary = iolist_to_binary(Request),
-    case ibrowse:send_req(URL, NewHeaders, post, Request_as_binary, NewOptions) of
+    Ibrowse_response = 
+        case Timeout of 
+            undefined ->
+                ibrowse:send_req(URL, NewHeaders, post, 
+                                 Request_as_binary, NewOptions);
+            _ ->
+                ibrowse:send_req(URL, NewHeaders, post, 
+                                 Request_as_binary, NewOptions, Timeout)
+        end,
+    case Ibrowse_response of
         {ok, Status, ResponseHeaders, ResponseBody} ->
             {ok, list_to_integer(Status), ResponseHeaders, ResponseBody};
         {error, Reason} ->

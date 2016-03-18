@@ -146,6 +146,7 @@ groups() ->
       ,client_encoded_header
       ,client_two_headers
       ,client_one_header_one_skipped
+      ,ibrowse_client_timeout
       ,raw 
       ,raw_client
       ,raw_client_error
@@ -537,6 +538,11 @@ client_two_headers(_Config) ->
 client_one_header_one_skipped(_Config) ->
   {ok,200, _, [#header{header_field = "hello"}], #response_body{response = "ok"}, [], _} =
     test_service_client:do_test(#request_body{expected_response="one_header_one_skipped"}, [], []).
+
+ibrowse_client_timeout(_Config) ->
+  {error,{client,{http_request,req_timedout}}, _} = 
+  test_service_client:do_test(#request_body{expected_response="sleep:2"}, [], 
+                            [{http_options, [{timeout, 1000}]}]).
 
 raw(_Config) ->
   {ok,200, _, [], #response_body{response = "raw"}, [], _} =

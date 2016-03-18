@@ -65,6 +65,8 @@ generating the client).
   interface that is described in [Integrating a HTTP client](integrating_a_http_client.md).
   2. `{url, URL::string()}` - use a URL that is different from the URL
   specified in the WSDL.
+  3. `{timeout, Value}`. This allows to set the timeout for the request, in milliseconds.
+  It defaults to the default of the used client (ibrowse: 3000 milliseconds, inets/httpc: infinity). 
 
   All other options used here are passed on to the application that is used
   to implement the HTTP client (so the options that are available and their
