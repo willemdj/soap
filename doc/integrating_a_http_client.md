@@ -55,3 +55,20 @@ passed on to the HTTP client.
 It is the responsibility of the HTTP client integration to ensure that the
 HTTP request is executed and that the response is translated to the
 `http_response()` type.
+
+There are three options that are documented explicitly in the [client
+tutorial](soap_client_tutorial.md) and that should work for _all_ clients: 
+
+  1. `{http_client, module()}` - use an HTTP
+  client that is different from what was specified when generating the
+  client module. 
+  2. `{url, URL::string()}` - use a URL that is different from the URL
+  specified in the WSDL.
+  3. `{timeout, Value}`. This allows to set the timeout for the request, in milliseconds.
+  It defaults to the default of the used client. 
+
+From these 3 options the first two are handled by the framework itself,
+but the 3rd one (`{timeout, Value}`) must be handled by the integration
+module. If this option is in the list of options that is passed to
+`http_request/5`, then the integration module must translate this to the
+correct option or parameter that is used by the specific HTTP client.
