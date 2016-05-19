@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<definitions targetNamespace="http://test.com" name="TestRpcHelloService" xmlns="http://schemas.xmlsoap.org/wsdl/" xmlns:tns="http://test.com" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/">
+  <types>
+    <xsd:schema>
+      <xsd:import namespace="http://test.com" schemaLocation="rpc_literal_2.xsd"/>
+    </xsd:schema>
+  </types>
+  <message name="getGreetingRequest">
+    <part name="name" type="xsd:string"/>
+  </message>
+  <message name="getGreetingRequestResponse">
+    <part name="GreetingResponse" type="tns:greetingRes"/>
+  </message>
+  <portType name="TestRpcHello">
+    <operation name="getGreetingRequest" parameterOrder="name">
+      <input message="tns:getGreetingRequest"/>
+      <output message="tns:getGreetingRequestResponse"/>
+    </operation>
+  </portType>
+  <binding name="TestRpcPortBinding" type="tns:TestRpcHello">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" style="rpc"/>
+    <operation name="getGreetingRequest">
+      <soap:operation soapAction=""/>
+      <input>
+        <soap:body use="literal" namespace="http://test.com"/>
+      </input>
+      <output>
+        <soap:body use="literal" namespace="http://test.com"/>
+      </output>
+    </operation>
+  </binding>
+  <service name="TestRpcHelloService">
+    <port name="TestRpcPort" binding="tns:TestRpcPortBinding">
+      <soap:address location="http://localhost:8080"/>
+    </port>
+  </service>
+</definitions>

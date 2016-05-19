@@ -1,0 +1,46 @@
+<?xml version="1.0" ?>
+<wsdl:definitions name="issue4Service" targetNamespace="urn:issue4Service"
+               xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/"
+               xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+               xmlns:tns="urn:issue4Service"
+               xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+               xmlns:SOAP-ENC="http://schemas.xmlsoap.org/soap/encoding/"
+               xmlns="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:types></wsdl:types>
+
+  <wsdl:message name="getLibSysCodeRequest">
+    <wsdl:part name="code" type="xsd:string" />
+  </wsdl:message>
+
+  <wsdl:message name="getLibSysCodeResponse">
+    <wsdl:part name="getLibSysCode" type="xsd:string" />
+  </wsdl:message>
+
+  <wsdl:portType name="issue4ServicePort">
+    <wsdl:operation name="getLibSysCode">
+      <wsdl:input message="tns:getLibSysCodeRequest" />
+      <wsdl:output message="tns:getLibSysCodeResponse" />
+    </wsdl:operation>
+  </wsdl:portType>
+
+  <wsdl:binding name="issue4ServiceBinding" type="tns:issue4ServicePort">
+    <soap:binding style="rpc" transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="getLibSysCode">
+      <soap:operation soapAction="urn:issue4Service#issue4#getLibSysCode" />
+      <wsdl:input>
+        <soap:body use="encoded" namespace="urn:issue4Service" 
+          encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="encoded" namespace="urn:issue4Service" 
+          encodingStyle="http://schemas.xmlsoap.org/soap/encoding/" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+
+  <wsdl:service name="issue4Service">
+    <wsdl:port name="issue4ServicePort" binding="tns:issue4ServiceBinding">
+      <soap:address location="http://33.33.33.33:33/webservice/service.php" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

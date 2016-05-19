@@ -21,7 +21,6 @@
 -module(soap_SUITE).
 -include_lib("common_test/include/ct.hrl").
 -include("test_service.hrl").
--include("../src/soap_fault.hrl").
 -compile(export_all).
 
 -define(HOST, "http://localhost").
@@ -179,8 +178,10 @@ groups() ->
       ,wsdls_salesforce
       ,wsdls_europepmc
       ,wsdls_ebay
+      ,wsdls_rpc
+      ,wsdls_rpc_2
+      ,wsdls_issue_4_literal
       ]}
-
   ].
 
 init_per_group(cowboy_server, Config) ->
@@ -327,7 +328,8 @@ all() ->
   %% for some reason the mochi server 
   %% seems to continue answering requests after shutdown
   %% for a while, therefore put it last.
-  {group, mochi_server}
+  {group, mochi_server},
+  issue_4_encoded
   ].
 
 %%-------------------------------------------------------------------------
@@ -661,8 +663,33 @@ wsdls_europepmc(Config) ->
 wsdls_ebay(Config) ->
   test_wsdl(Config, "ebaySvc_short.wsdl").
 
+wsdls_rpc(Config) ->
+  test_wsdl(Config, "rpc_literal.wsdl").
+
+wsdls_rpc_2(Config) ->
+  test_wsdl(Config, "rpc_literal_2.wsdl").
+
+wsdls_issue_4_literal(Config) ->
+  test_wsdl(Config, "issue_4_literal.wsdl").
+
 erlang2wsdl_store(Config) ->
   process_hrl("store.hrl", Config).
+
+issue_4_encoded(Config) ->
+  Options = [{generate,both},
+             {server_name,"server"},{client_name,"client"},
+             {hrl_name, "test"}, {automatic_prefixes, true},
+             {http_server, cowboy_version()},
+             {http_client,soap_client_ibrowse},
+             {generate_tests, none},
+             {test_values,true}],
+  {error,"use of \"encoded\" messages is not supported"} =
+  try 
+    compile_wsdl("issue_4.wsdl", Options, Config)
+  catch
+    throw:Message ->
+      Message
+  end.
 
 %%-------------------------------------------------------------------------
 %% Internal functions

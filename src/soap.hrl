@@ -25,9 +25,13 @@
     name :: string(),
     operation :: atom(), %% name of function as used in handler module
     soap_action = [] :: string(),
+    wrapper_ns = [] :: string(), %% namespace for the wrapper element (in 
+                                 %% case of rpc style)
     op_type :: notification | request_response,
-    in_type :: atom(),
-    out_type :: undefined | atom(),
+    in_type :: [{string(), atom()}]  | atom(), %% the list type is only used
+                                               %% during construction of the 
+                                               %% interface
+    out_type :: [{string(), atom()}] | undefined | atom(), %% see above
     fault_types :: [atom()]}).
 -type op() :: #op{}.
 
@@ -40,7 +44,9 @@
     server_handler :: module(),
     client_handler :: module(),
     http_options = [] :: [any()],
+    target_ns :: string(),
     soap_ns :: string(),
+    style :: string() | undefined, %% "rpc" | "document" 
     decoders :: [{string(), module}], 
     url :: string(),
     port :: string(),
@@ -50,6 +56,8 @@
     model :: erlsom:model(),
     %% the fields below are only used during the creation of the interface
     prefix_count = 0 :: integer(), %% used to assign unique prefixes
+    tns_prefix :: string() | undefined, %% used for rpc type wsdl if the target ns
+                                        %% is also used as the ns of an operation.
     imported = [] :: [{string(), string() | undefined}] %% imported namespaces,
     %% {URI, Prefix}, to prevent duplicates and to be able to add the 
     %% prefix later on.

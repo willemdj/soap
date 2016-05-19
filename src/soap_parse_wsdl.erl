@@ -63,20 +63,30 @@ get_model(Wsdl_file, Options) ->
 -spec get_namespaces(Wsdl_file::string(), Options::[option()]) -> 
     [{uri(), prefix()}].
 get_namespaces(Wsdl_file, Options) ->
-    Model = get_model(Wsdl_file, Options),
-    Namespace_pairs = erlsom_lib:getNamespacesFromModel(Model),
-    %% TODO: it is not clear why 'undefined' should be there at all. 
-    lists:usort([Uri || {Uri, _Prefix} <- Namespace_pairs, Uri /= undefined]).
-
+    case get_model(Wsdl_file, Options) of
+        undefined ->
+            [];
+        Model ->
+            Namespace_pairs = erlsom_lib:getNamespacesFromModel(Model),
+            lists:usort([Uri || {Uri, _Prefix} <- Namespace_pairs, 
+                                                  Uri /= undefined])
+    end.
 
 %% ---------------------------------------------------------------------------
 %% Create an 'interface' : an internal representation of the wsdl for
-%% a certain servcie and port.
+%% a certain service and port.
 %% ---------------------------------------------------------------------------
 file(Wsdl_file, Service, Port, Options) ->
-    Interface = #interface{service = Service, port = Port},
-    parse_wsdls([Wsdl_file], Options, Interface).
-
+    Interface =  parse_wsdls([Wsdl_file], 
+                             Options,
+                             #interface{service = Service, port = Port}),
+    Interface2 = case Interface of
+                     #interface{style = "rpc"} ->
+                         wrap_rpc_types(Interface, Options);
+                     _ ->
+                         Interface
+                 end,
+    clean_up(Interface2).
 
 %%% ---------------------------------------------------------------------------
 %%% Internal functions
@@ -119,7 +129,8 @@ parse_wsdls([], _Options, Interface) ->
     Interface;
 parse_wsdls([Wsdl_file | Tail], Options, 
             #interface{prefix_count = Pf_count, 
-            imported = Imported} = Interface) ->
+                       target_ns = Target_ns,
+                       imported = Imported} = Interface) ->
     {ok, Wsdl_binary} = get_url_file(Wsdl_file),
     {ok, Wsdl, _} = soap_decode_wsdl_1_1:decode(Wsdl_binary),
     Xsds = get_types(Wsdl),
@@ -135,11 +146,16 @@ parse_wsdls([Wsdl_file | Tail], Options,
     Model2 = add_schemas(Xsds, Model, Options, Import_list, Imported),
     Ns_list = [{Ns, Pf} || {Ns, Pf, _} <- Import_list],
     Interface2 = Interface#interface{model = Model2, 
+                                     target_ns = case Target_ns of
+                                                     undefined ->
+                                                         get_tns(Wsdl);
+                                                     _ ->
+                                                         Target_ns
+                                                 end,
                                      prefix_count = Pf_count2,
                                      imported = Imported ++ Ns_list},
     Interface3 = get_operations(Wsdl, Interface2),
     Imports = get_imports(Wsdl),
-    % io:format("WSDL imports: ~p~n", [Imports]),
     %% process imports (recursively, so that imports in the imported files are
     %% processed as well).
     %% For the moment, the namespace is ignored on operations etc.
@@ -213,6 +229,9 @@ get_types(#'wsdl:definitions'{types = Types}) ->
     #'wsdl:types'{choice = Xsds} = Types,
     Xsds.
 
+get_tns(#'wsdl:definitions'{targetNamespace = Tns}) ->
+    Tns.
+
 
 get_imports(#'wsdl:definitions'{import = undefined}) ->
     [];
@@ -261,7 +280,7 @@ get_ops_from_binding(#'wsdl:definitions'{binding = Bindings} = Wsdl,
             Interface;
         #'wsdl:binding'{type = Port_type, choice = Extension_elements, 
                         operation = Operations} ->
-            Interface2 = add_soap_version(Extension_elements, Interface), 
+            Interface2 = add_soap_info(Extension_elements, Interface), 
             Port_type_str = erlsom_lib:localName(Port_type),
             Interface3 = 
                 get_ops_from_port_type(Wsdl, 
@@ -269,18 +288,20 @@ get_ops_from_binding(#'wsdl:definitions'{binding = Bindings} = Wsdl,
             get_ops_from_binding2(Operations, Interface3)
     end.
 
-add_soap_version(Extension_els, Interface) ->
+add_soap_info(Extension_els, Interface) ->
     case lists:keyfind('soap:binding', 1, Extension_els) of
-     false ->
-         case lists:keyfind('soap12:tBinding', 1, Extension_els) of
-             false ->
-                 throw({error, "no SOAP 1.1 or SOAP 1.2 binding found"});
-             _ ->
-                 Interface#interface{version = '1.2',
-                                     soap_ns = ?SOAP12_NS}
-         end;
-        _ ->
+        false ->
+            case lists:keyfind('soap12:tBinding', 1, Extension_els) of
+                false ->
+                    throw({error, "no SOAP 1.1 or SOAP 1.2 binding found"});
+                #'soap12:tBinding'{style = Style}  ->
+                    Interface#interface{version = '1.2',
+                                        style = Style,
+                                        soap_ns = ?SOAP12_NS}
+            end;
+        #'soap:binding'{style = Style} ->
             Interface#interface{version = '1.1',
+                                style = Style,
                                 soap_ns = ?SOAP_NS}
     end.
 
@@ -295,8 +316,11 @@ get_op_from_binding(#op{name = Name} = Op, Operations) ->
     case lists:keyfind(Name, #'wsdl:bindingOperation'.name, Operations) of
         false ->
             Op;
-        #'wsdl:bindingOperation'{choice = Extensions} ->
-            Op#op{soap_action = get_action(Extensions)}
+        #'wsdl:bindingOperation'{choice = Extensions,
+                                 input = Input} ->
+            Action = get_action(Extensions),
+            Ns = get_input_ns(Input),
+            Op#op{soap_action = Action, wrapper_ns = Ns}
     end.
 
 get_action(Extensions) ->
@@ -307,6 +331,22 @@ get_action(Extensions) ->
             "";
         #'soap:operation'{soapAction = Action} ->
             Action
+    end.
+
+get_input_ns(undefined) ->
+    undefined;
+get_input_ns(#'wsdl:bindingOperationMessage'{choice = Extensions}) ->
+    case lists:keyfind('soap:body', 1, Extensions) of
+        false ->
+            undefined;
+        #'soap:body'{namespace = Namespace, use = Use} ->
+            case string:to_lower(Use) of
+                "encoded" ->
+                    throw({error, "use of \"encoded\" messages is not supported"});
+                _ ->
+                    ok
+            end,
+            Namespace
     end.
 
 get_ops_from_port_type(#'wsdl:definitions'{portType = Port_types} = Wsdl, 
@@ -361,26 +401,203 @@ type_for_message(#'wsdl:definitions'{message = Messages}, Message, Model) ->
     case lists:keyfind(Message, #'wsdl:message'.name, Messages) of
         false ->
             {error, "Message " ++ Message ++ " not found"};
-        #'wsdl:message'{part = Parts} when length(Parts) /= 1 ->
-            {error, "Message " ++ Message ++ " does not have exactly 1 part"};
-        #'wsdl:message'{part = [#'wsdl:part'{element = Element}]} ->
-            %% what we need is the type
-            LocalPart = erlsom_lib:localName(Element),
-            Uri = erlsom_lib:getUriFromQname(Element),
-            Prefix = erlsom_lib:getPrefixFromModel(Model, Uri),
-            Element_name = case Prefix of 
-                    undefined ->
-                        LocalPart;
-                    "" ->
-                        LocalPart;
-                    _ -> 
-                        Prefix ++ ":" ++ LocalPart
-                end,
-            type_for_element(list_to_atom(Element_name), Model)
+        #'wsdl:message'{part = undefined} ->
+            [];
+        #'wsdl:message'{part = Parts} ->
+            [type_for_part(P, Model) || P <- Parts]
     end.
+
+type_for_part(#'wsdl:part'{element = undefined, 
+                           type = Type,
+                           name = Name}, Model) ->
+    {Name, type_for_type(Type, Model)};
+type_for_part(#'wsdl:part'{element = Element,
+                           name = Name}, Model) ->
+    %% what we need is the type
+    LocalPart = erlsom_lib:localName(Element),
+    Uri = erlsom_lib:getUriFromQname(Element),
+    Prefix = erlsom_lib:getPrefixFromModel(Model, Uri),
+    Element_name = make_name(Prefix, LocalPart),
+    {Name, type_for_element(list_to_atom(Element_name), Model)}.
 
 type_for_element(Element, Model) ->
     erlsom_lib:getTypeFromElement(Element, Model).
+
+type_for_type(Type, Model) ->
+    Uri = erlsom_lib:getUriFromQname(Type),
+    case Uri of 
+        "http://www.w3.org/2001/XMLSchema" ->
+            schema_type(Type);
+        _ ->
+            LocalPart = erlsom_lib:localName(Type),
+            Prefix = erlsom_lib:getPrefixFromModel(Model, Uri),
+            make_name(Prefix, LocalPart)
+    end.
+
+%% TODO: use proper accessor functions
+%% -record(qname, {uri, localPart, prefix, mappedPrefix}).
+schema_type({qname, _, Localpart, _, _}) ->
+    "s:" ++ Localpart;
+schema_type(_) ->
+    "s:string".
+
+make_name(Prefix, LocalPart) ->
+    case Prefix of 
+        undefined ->
+            LocalPart; 
+        "" ->
+            LocalPart; 
+        _ ->
+            Prefix ++ ":" ++ LocalPart
+    end.
+
+%% While parsing the WSDL it was necessary to consider also the option 
+%% that this might be an "rpc" type of wsdl, and therefore a message 
+%% could have more than one part. No we know that this is not the 
+%% case, change the list of parts (which must have 1 element) to just 
+%% that one element (no longer a list).
+%%
+%% For "rpc" style WSDLs, the new wrapped type must be linked to the
+%% operations.
+clean_up(#interface{ops = Ops, 
+                    style = Style,
+                    target_ns = Tns,
+                    tns_prefix = TnsPrefix} = Interface) ->
+    Interface#interface{ops = [clean_up(Op, Style, Tns, TnsPrefix) || Op <- Ops]}.
+
+clean_up(#op{name = Name, 
+             wrapper_ns = Ns,
+             out_type = Out_type} = Op, "rpc", Tns, TnsPrefix) ->
+    Prefix = case Ns of
+                 Tns when is_list(TnsPrefix)  -> 
+                     TnsPrefix ++ ":";
+                 _ ->
+                     ""
+             end,
+    OutName = case Out_type of
+                  undefined ->
+                      undefined;
+                  _ -> 
+                      list_to_atom(Prefix ++ Name ++ "Response")
+              end,
+    Op#op{in_type = list_to_atom(Prefix ++ Name), 
+          out_type = OutName};
+clean_up(#op{in_type = [{_N1, In}], out_type = [{_N2, Out}]} = Op, _, _, _) ->
+    Op#op{in_type = In, out_type = Out};
+clean_up(#op{in_type = [{_Name, In}], out_type = undefined} = Op, _, _, _) ->
+    Op#op{in_type = In};
+clean_up(#op{name = Name}, _, _, _) ->
+    throw({error, "Operation " ++ Name ++ " uses messages with more than 1 part, "
+          "which is not supported for document style operations"}).
+
+%% If the binding of the specified port has style = "rpc", the WSDL 
+%% specifies which parameters must be used for each operation. 
+%%
+%% These parameters must be wrapped in an XML element that has the name of the 
+%% operation. 
+%%
+%% Both the operation and the name of the parameters are not in the "types" 
+%% part of the WSDL, and therefore also not in the "model" of the $interface{}.
+%%
+%% See https://msdn.microsoft.com/en-us/library/ms996466.aspx for a nice 
+%% description.
+%%
+%% For each RPC/literal operation
+%% 1. For each part in the input and output messages of that operation, declare 
+%%    a type with the contents described in step 2.
+%% 2. Declare an element with the name of the part, the type referenced by 
+%%    type=". The element form must be unqualified.
+%% 3. Declare a global element with the operation name and the namespace from 
+%%    soap:body/@namespace in the binding. Make the type of this element the 
+%%    one defined in step 1 for the input message.
+%% 4. Declare a global element with the operation name and the word Response 
+%%    appended to it and the namespace from soap:body/@namespace in the binding. 
+%%    Make the type of this element the one defined in step 1 for the output 
+%%    message.
+%% 5. Change the input message to contain one part and reference the element 
+%%    you declared in step 3.
+%% 6. Change the output message to contain one part and reference the element 
+%%    you declared in step 4.
+%% 7. Change the style to document in the binding.
+wrap_rpc_types(#interface{ops = Ops,
+                          target_ns = Tns,
+                          model = Model,
+                          imported = Namespaces} = Interface,
+              Options) ->
+    OtherNamespaces = proplists:get_value(namespaces, Options, []),
+    AllNamespaces = Namespaces ++ OtherNamespaces,
+    %% Since every operation kan have its own namespace, 
+    %% there is an xsd for each of them.
+    %%
+    %% There is a special case if the namespace of the 
+    %% operation == one of the already declared namespaces, 
+    %% because each namespace can only have one prefix.
+    %% If the namespace of the operation == tns, then 
+    %% this has an effect on the types of the messages
+    Xsds = [xsd_from_op(Op, AllNamespaces) || Op <- Ops],
+    {CombinedModels, _} = lists:foldl(fun add_model/2, {Model, 
+                                                        AllNamespaces}, Xsds),
+    TnsPrefix = proplists:get_value(Tns, AllNamespaces, undefined),
+    Interface#interface{model = CombinedModels,
+                        tns_prefix = TnsPrefix}.
+
+add_model({Xsd, Ns}, {CombinedModel, Namespaces}) ->
+    Prefix = proplists:get_value(Ns, Namespaces, undefined),
+    {ok, Model} = erlsom:compile_xsd(Xsd, 
+                                     [{include_any_attribs, false}
+                                     ,{already_imported, Namespaces}
+                                     ,{prefix, Prefix}
+                                     ,{strict, true}
+                                     ]),
+    NewModel = case CombinedModel of
+                   undefined ->
+                       Model;
+                   _ ->
+                       erlsom:add_model(Model, CombinedModel)
+               end,
+    {NewModel, Namespaces}.
+
+xsd_from_op(#op{name = Name, 
+                wrapper_ns = Namespace,
+                in_type = InParts, 
+                out_type = OutParts}, Namespaces) ->
+    Elements = [in_rpc_element(Name, InParts),
+                out_rpc_element(Name, OutParts)],
+    Namespace_decls = [namespace_decl(N) || N <- Namespaces],
+    {lists:flatten(
+         ["<s:schema xmlns:s=\"http://www.w3.org/2001/XMLSchema\"\n",
+          Namespace_decls,
+          "          xmlns:tns=\"", Namespace, "\"\n",
+          "          elementFormDefault=\"qualified\"\n",
+          "          targetNamespace=\"", Namespace, "\">\n",
+          Elements,
+          "</s:schema>\n"]),
+      Namespace}.
+
+in_rpc_element(Name, InParts) ->
+    ["  <s:element name=\"", Name, "\">\n",
+     "    <s:complexType>\n",
+     "       <s:sequence>\n",
+     [rpc_part(P) || P <- InParts],
+     "      </s:sequence>\n",
+     "    </s:complexType>\n",
+     "  </s:element>\n"].
+
+out_rpc_element(Name, OutParts) ->
+    in_rpc_element(Name ++ "Response", OutParts).
+
+rpc_part({Name, Type}) ->
+    ["      <s:element name=\"", Name, "\"",
+                 %%  " form=\"unqualified\"",
+                     " type=\"", Type, "\">\n",
+     "      </s:element>\n"].
+
+namespace_decl({_Uri, undefined}) ->
+    [];
+namespace_decl({Uri, Prefix}) ->
+    ["          xmlns:", Prefix, "=\"", Uri, "\"\n"].
+
+
 
 
 %% ---------------------------------------------------------------------------
