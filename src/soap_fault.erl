@@ -242,31 +242,36 @@ fault_code(#faultcode{code = Code,
      subcode_text(Subcode),
      <<"</SOAP-ENV:Code>">>].
 
-fault_code_text(Code, '1.1') 
+fault_code_text(Code, Version) when is_atom(Code) ->
+  fault_code_text_2(Code, Version);
+fault_code_text(Code, Version) when not is_atom(Code) ->
+  fault_code_text_2(unicode:characters_to_list(Code), Version).
+
+fault_code_text_2(Code, '1.1') 
     when Code == server;
          Code == "Server" ->
     <<"SOAP-ENV:Server">>; 
-fault_code_text(Code, '1.2')
+fault_code_text_2(Code, '1.2')
     when Code == server;
          Code == "Receiver" ->
     <<"SOAP-ENV:Receiver">>; 
-fault_code_text(Code, '1.1')
+fault_code_text_2(Code, '1.1')
     when Code == client;
          Code == "Client" ->
     <<"SOAP-ENV:Client">>; 
-fault_code_text(Code, '1.2')
+fault_code_text_2(Code, '1.2')
     when Code == client;
          Code == "Sender" ->
     <<"SOAP-ENV:Sender">>; 
-fault_code_text(Code, _)  %% version 1.2
+fault_code_text_2(Code, _)  %% version 1.2
     when Code == version_mismatch;
          Code == "VersionMismatch" ->
     <<"SOAP-ENV:VersionMismatch">>; 
-fault_code_text(Code, _)  %% version 1.2
+fault_code_text_2(Code, _)  %% version 1.2
     when Code == must_understand;
          Code == "MustUnderstand" ->
     <<"SOAP-ENV:MustUnderstand">>; 
-fault_code_text(Code, _)  %% version 1.2
+fault_code_text_2(Code, _)  %% version 1.2
     when Code == data_encoding_unknown;
          Code == "DataEncodingUnknown" ->
     <<"SOAP-ENV:DataEncodingUnknown">>.
@@ -469,13 +474,11 @@ parse_fault_1_2({endElement, ?SOAP12_NS, "Reason", _},
 parse_fault_1_2({startElement, ?SOAP12_NS, "Text", _, Attributes}, 
                 _Namespaces,
                 #pf_state{state = reasons} = S) ->
-    io:format("attributes: ~p~n", [Attributes]),
     Language = 
         case lists:keyfind("lang", #attribute.localName, Attributes) of
             #attribute{prefix = "xml", value = L} ->
                 L;
             _Other ->
-                io:format("found: ~p~n", [_Other]),
                 undefined
         end, 
     S#pf_state{language = Language, state = text};

@@ -135,6 +135,8 @@ groups() ->
       ]}
   ,{client, [],
       [client_no_error
+      ,client_unicode
+      ,client_unicode_binary
       ,client_fault_exception
       ,client_http_error
       ,client_wrong_request_header
@@ -150,6 +152,7 @@ groups() ->
       ,raw_client
       ,raw_client_error
       ,{inets_client, [], [inets_client_no_error
+                          ,inets_client_unicode
                           ,inets_client_timeout]}
       ,{faults_1_1, [], [client_client_fault
                         ,client_server_fault
@@ -452,9 +455,26 @@ client_no_error(_Config) ->
     test_service_client:do_test(#request_body{expected_response="ok"}, [], []),
   "text/xml" = proplists:get_value("Content-Type", Http_headers).
 
+client_unicode(_Config) ->
+  {ok,200, _, [],#response_body{response = "بِسْمِ ٱلرَّحْمـَبنِ ٱلرَّحِيمِ"}, [], _} = 
+    test_service_client:do_test(#request_body{expected_response=
+                                              "بِسْمِ ٱلرَّحْمـَبنِ ٱلرَّحِيمِ"}, [], []).
+
+client_unicode_binary(_Config) ->
+  {ok,200, _, [],#response_body{response = "بِسْمِ ٱلرَّحْمـَبنِ ٱلرَّحِيمِ"}, [], _} = 
+    test_service_client:do_test(#request_body{
+                                   expected_response=
+                                       unicode:characters_to_binary("بِسْمِ ٱلرَّحْمـَبنِ ٱلرَّحِيمِ")},
+                                [], []).
+
 inets_client_no_error(_Config) ->
   {ok,200, _, [],#response_body{}, [], _} = 
   test_inets_client:do_test(#request_body{expected_response="sleep:0"}, [], []).
+
+inets_client_unicode(_Config) ->
+  {ok,200, _, [],#response_body{response = "بِسْمِ ٱلرَّحْمـَبنِ ٱلرَّحِيمِ"}, [], _} = 
+    test_inets_client:do_test(#request_body{expected_response=
+                                              "بِسْمِ ٱلرَّحْمـَبنِ ٱلرَّحِيمِ"}, [], []).
 
 inets_client_timeout(_Config) ->
   {error,{client,{http_request,timeout}}, _} = 

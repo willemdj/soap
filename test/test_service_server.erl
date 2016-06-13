@@ -111,7 +111,16 @@ do_test(#request_body{expected_response="raw"}, Soap_req, State) ->
     {_Start, 3} = binary:match(Raw_body, <<"raw">>),
     Raw_resp = 
       <<"<env:Envelope xmlns:env=\"http://schemas.xmlsoap.org/soap/envelope/\"><env:Body><x:response_body xmlns:x=\"test\"><response>raw</response></x:response_body></env:Body></env:Envelope>">>,
-    {raw, 200, Raw_resp, Soap_req, State}.
+    {raw, 200, Raw_resp, Soap_req, State};
+do_test(#request_body{expected_response=Response}, Soap_req, State) when Response=="not_ok" ->
+    %% trigger an exception
+    case Response of
+        "ok" ->
+            {ok, #response_body{response="ok"}, Soap_req, State}
+    end;
+do_test(#request_body{expected_response=Something_else}, Soap_req, State) ->
+    %% simply echo the message (used to test encodings)
+    {ok, #response_body{response=Something_else}, Soap_req, State}.
 
 %% replace the default exception handler to include a stacktrace.
 -spec exception(Class::atom(), Reason::any(), Stacktrace::any(),

@@ -108,7 +108,7 @@ call_body(Body, Encoded_headers, Soap_action,
                 ["<s:Envelope xmlns:s=\"", Namespace, "\">",
                     Encoded_headers,
                     "<s:Body>",
-                    Encoded_body,
+                    unicode:characters_to_binary(Encoded_body),
                     "</s:Body></s:Envelope>"],
             call_message(Http_body, Soap_action, Interface, Attachments)
     catch
@@ -212,7 +212,8 @@ encode_headers([Header|T], Model, Acc)
 encode_headers([Header|T], Model, Acc) when is_tuple(Header) ->
     case erlsom:write(Header, Model) of
         {ok, Encoded_header} ->
-            encode_headers(T, Model, [Encoded_header | Acc]);
+            encode_headers(T, Model, 
+                           [unicode:characters_to_binary(Encoded_header) | Acc]);
         Error ->
             {error, {client, {encoding_headers, {Error}}}}
     end.

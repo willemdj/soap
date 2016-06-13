@@ -321,4 +321,4 @@ add_if_not_present(List, {Key, _} = Tuple) ->
     
 %% TODO: look at this _and_ erlsom_lib:xmlString - this is quite inefficient.
 xml_string(IO_list) ->
-    erlsom_lib:xmlString(iolist_to_binary(IO_list)).
+  erlsom_lib:xmlString(unicode:characters_to_binary(IO_list)).
