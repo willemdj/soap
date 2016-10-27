@@ -84,7 +84,7 @@ handle_xml(Soap_req, Cowboy_state, Version_module) ->
   Content_type = soap_req:content_type(Soap_req3),
   %% get the soap message (Xml) from the request body
   {Xml, Soap_req4} =
-    case string:to_lower(lists:sublist(Content_type, 17)) of
+    case maybe_content_type(Content_type) of
       "multipart/related" -> 
         %% soap with attachments, the message is in the first part
         try 
@@ -103,6 +103,11 @@ handle_xml(Soap_req, Cowboy_state, Version_module) ->
   end,
   Handler_resp = soap_server_handler:handle_message(Xml, Soap_req4),
   make_response(Handler_resp, Cowboy_state, Version_module).
+
+maybe_content_type(undefined) ->
+  undefined;
+maybe_content_type(Content_type) ->
+  string:to_lower(lists:sublist(Content_type, 17)).
 
 mime_decode(Message, Content_type_header) ->
   Mime_parameters = lists:nthtail(17, Content_type_header),
