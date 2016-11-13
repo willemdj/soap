@@ -201,6 +201,7 @@ add_schemas([], AccModel, _Options, _ImportList, _Imported) ->
 add_schemas([Xsd| Tail], AccModel, Options, ImportList, Imported) ->
     Include_any_attribs = 
         proplists:get_value(include_any_attribs, Options, false),
+    ErlsomOptions = proplists:get_value(erlsom_options, Options, []),
     Tns = erlsom_lib:getTargetNamespaceFromXsd(Xsd),    
     Prefix = 
         case lists:keyfind(Tns, 1, ImportList) of
@@ -214,7 +215,7 @@ add_schemas([Xsd| Tail], AccModel, Options, ImportList, Imported) ->
             [{include_files, ImportList}, 
              {already_imported, Imported}, 
              {include_any_attribs, Include_any_attribs},
-             {prefix, Prefix} | Options]),
+             {prefix, Prefix} | ErlsomOptions]),
     {Model2, Imported2} = 
         case AccModel of
             undefined -> 
@@ -526,6 +527,7 @@ wrap_rpc_types(#interface{ops = Ops,
               Options) ->
     OtherNamespaces = proplists:get_value(namespaces, Options, []),
     AllNamespaces = Namespaces ++ OtherNamespaces,
+    ErlsomOptions = proplists:get_value(erlsom_options, Options, []),
     %% Since every operation kan have its own namespace, 
     %% there is an xsd for each of them.
     %%
@@ -535,27 +537,27 @@ wrap_rpc_types(#interface{ops = Ops,
     %% If the namespace of the operation == tns, then 
     %% this has an effect on the types of the messages
     Xsds = [xsd_from_op(Op, AllNamespaces) || Op <- Ops],
-    {CombinedModels, _} = lists:foldl(fun add_model/2, {Model, 
-                                                        AllNamespaces}, Xsds),
+    {CombinedModels, _, _} = lists:foldl(fun add_model/2, {Model, 
+                                                        AllNamespaces,
+                                                        ErlsomOptions}, Xsds),
     TnsPrefix = proplists:get_value(Tns, AllNamespaces, undefined),
     Interface#interface{model = CombinedModels,
                         tns_prefix = TnsPrefix}.
 
-add_model({Xsd, Ns}, {CombinedModel, Namespaces}) ->
+add_model({Xsd, Ns}, {CombinedModel, Namespaces, ErlsomOptions}) ->
     Prefix = proplists:get_value(Ns, Namespaces, undefined),
     {ok, Model} = erlsom:compile_xsd(Xsd, 
                                      [{include_any_attribs, false}
                                      ,{already_imported, Namespaces}
                                      ,{prefix, Prefix}
-                                     ,{strict, true}
-                                     ]),
+                                     ,{strict, true} | ErlsomOptions]),
     NewModel = case CombinedModel of
                    undefined ->
                        Model;
                    _ ->
                        erlsom:add_model(Model, CombinedModel)
                end,
-    {NewModel, Namespaces}.
+    {NewModel, Namespaces, ErlsomOptions}.
 
 xsd_from_op(#op{name = Name, 
                 wrapper_ns = Namespace,

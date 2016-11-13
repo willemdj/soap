@@ -25,6 +25,7 @@ wsdl2erlang_option() ::
   {test_values, boolean()} |
   {generate_tests, none | client | server | both} |
   {module, string()} |
+  {erlsom_options, proplists:proplist()} |
   {generate, client | server | both} |
   {service, string()} |
   {port, string()} }
@@ -148,6 +149,11 @@ The following options are available:
   Note that the generated module will be the same (apart from the name) as
   the module that would be created for the server side if the option
   `{generate_tests, server}`  or `{generate_tests, both}` is used.
+
+- `{erlsom_options, proplists:proplist()}` - These options are passed on to
+  erlsom. This can for example be used to specify the options for dealing
+  with imported namespaces in the `types` (xsd) section of the WSDL. See
+  the documentation of erlsom for more details.
 
 - `{strict, boolean()}` - If `false`, the functions that decode and encode XML
   will convert only integer (xsd:integer) and boolean values from the XML

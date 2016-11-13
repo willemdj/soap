@@ -176,6 +176,7 @@ add_schemas([], AccModel, _Options, _ImportList, _Imported) ->
 add_schemas([Xsd| Tail], AccModel, Options, ImportList, Imported) ->
     Include_any_attribs = proplists:get_value(include_any_attribs, Options, 
                                               false),
+    ErlsomOptions = proplists:get_value(erlsom_options, Options, []),
     Tns = erlsom_lib:getTargetNamespaceFromXsd(Xsd),  
     Prefix = 
         case lists:keyfind(Tns, 1, ImportList) of
@@ -187,7 +188,7 @@ add_schemas([Xsd| Tail], AccModel, Options, ImportList, Imported) ->
                              [{include_files, ImportList}, 
                               {already_imported, Imported}, 
                               {include_any_attribs, Include_any_attribs},
-                              {prefix, Prefix} | Options]),
+                              {prefix, Prefix} | ErlsomOptions]),
     {Model2, Imported2} = 
         case AccModel of
             undefined -> 

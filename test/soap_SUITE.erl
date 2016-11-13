@@ -176,6 +176,9 @@ groups() ->
   ,{erlang2wsdl, [],
       [erlang2wsdl_store
       ]}
+  ,{wsdl2erlang, [],
+      [reiseauskunft
+      ]}
   ,{wsdls, [],
       [wsdls_clickatell
       ,wsdls_salesforce
@@ -243,6 +246,9 @@ init_per_group(tempconvert_12, Config) ->
              {service, "TempConvert"}, {port, "TempConvertSoap12"}
             ],
   compile_wsdl("tempconvert.wsdl", Options, Config),
+  Config;
+init_per_group(erlang2wsdl, Config) ->
+  inets:start(),
   Config;
 init_per_group(tempconvert_local, Config) ->
   {ok, _} = soap:start_server(tempconvert_server, [{port, 8080},
@@ -326,6 +332,7 @@ all() ->
   {group, soap_req},
   {group, wsdls}, %% takes a long time
   {group, erlang2wsdl},
+  {group, wsdl2erlang},
   {group, attachments},
   {group, wsdl_2_0},
   %% for some reason the mochi server 
@@ -692,6 +699,33 @@ wsdls_rpc_2(Config) ->
 wsdls_issue_4_literal(Config) ->
   test_wsdl(Config, "issue_4_literal.wsdl").
 
+reiseauskunft(Config) ->
+  Ns = [{"http://www.bahn.de/webservices/dritte/ping/response","P10"},
+        {"http://www.bahn.de/webservices/dritte/ping/request","P9"},
+        {"http://www.bahn.de/webservices/dritte/monitoring/response","P8"},
+        {"http://www.bahn.de/webservices/dritte/monitoring/request","P7"},
+        {"http://www.bahn.de/webservices/dritte/datatypes/primitive","P6"},
+        {"http://www.bahn.de/webservices/dritte/datatypes/db","P5"},
+        {"http://www.bahn.de/webservices/dritte/datatypes/common","P4"},
+        {"http://www.bahn.de/webservices/dritte/angebotssuche/response","P3"},
+        {"http://www.bahn.de/webservices/dritte/angebotssuche/request","P2"},
+        {"http://www.bahn.de/webservices/dritte/angebotsdetails/response","P1"},
+        {"http://www.bahn.de/webservices/dritte/angebotsdetails/request","P0"},
+        {"http://www.bahn.de/webservices/dritte","P"}],
+  Include_fun = fun(Namespace, Url, _, _) -> 
+    Pf = proplists:get_value(Namespace, Ns, "pf"),
+    {ok,{{_,200,_}, _, Body}} = httpc:request(Url), 
+    {Body, Pf} 
+  end,
+  Options = [{generate,client},
+             {client_name,"client"},
+             {hrl_name, "test"}, 
+             {namespaces, Ns},
+             {http_client,soap_client_ibrowse},
+             {generate_tests, none}, {test_values,false},
+             {erlsom_options, [{include_fun, Include_fun}]}],
+  compile_wsdl("reiseauskunft.wsdl", Options, Config).
+
 erlang2wsdl_store(Config) ->
   process_hrl("store.hrl", Config).
 
@@ -722,7 +756,7 @@ test_wsdl(Config, Wsdl_file) ->
   
 test_wsdl_abs_path(Config, Wsdl) ->
   compile_wsdl_abs_path(Wsdl, [{generate,both},
-                      {include_dirs, [?config(data_dir, Config)]},
+                      {erlsom_options, [{include_dirs, [?config(data_dir, Config)]}]},
                       {server_name,"server"},{client_name,"client"},
                       {hrl_name, "test"}, {automatic_prefixes, true},
                       {http_server, cowboy_version()},

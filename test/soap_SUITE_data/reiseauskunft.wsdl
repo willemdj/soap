@@ -1,0 +1,200 @@
+<?xml version='1.0' encoding='UTF-8'?><!-- Published by JAX-WS RI (http://jax-ws.java.net). RI's version is JAX-WS RI 2.2.10-b140319.1121 svn-revision#7b34660d6bc70e587e8ec81a17e4d76af68816a6. --><WL5G3N0:definitions xmlns="" xmlns:WL5G3N0="http://schemas.xmlsoap.org/wsdl/" xmlns:WL5G3N1="http://www.bahn.de/webservices/dritte/angebotssuche/request" xmlns:WL5G3N10="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:WL5G3N2="http://www.bahn.de/webservices/dritte/angebotssuche/response" xmlns:WL5G3N3="http://www.bahn.de/webservices/dritte/angebotsdetails/request" xmlns:WL5G3N4="http://www.bahn.de/webservices/dritte/angebotsdetails/response" xmlns:WL5G3N5="http://www.bahn.de/webservices/dritte/ping/request" xmlns:WL5G3N6="http://www.bahn.de/webservices/dritte/ping/response" xmlns:WL5G3N7="http://www.bahn.de/webservices/dritte/monitoring/request" xmlns:WL5G3N8="http://www.bahn.de/webservices/dritte/monitoring/response" xmlns:WL5G3N9="http://www.bahn.de/webservices/dritte" targetNamespace="http://www.bahn.de/webservices/dritte">
+  <WL5G3N0:documentation>
+  
+    
+      
+      
+      
+      
+      
+      
+      
+      
+    
+  
+  
+    
+  
+  
+    
+  
+  
+    
+  
+  
+    
+  
+  
+    
+  
+  
+    
+  
+  
+    
+  
+  
+    
+  
+  
+    
+      
+      
+    
+    
+      
+      
+    
+    
+      
+      
+    
+    
+      
+      
+    
+  
+  
+    
+    
+      
+      
+        
+      
+      
+        
+      
+    
+    
+      
+      
+        
+      
+      
+        
+      
+    
+    
+      
+      
+        
+      
+      
+        
+      
+    
+    
+      
+      
+        
+      
+      
+        
+      
+    
+  
+  
+    
+      
+    
+  
+</WL5G3N0:documentation>
+  <WL5G3N0:types>
+    <xs:schema xmlns:adreq="http://www.bahn.de/webservices/dritte/angebotsdetails/request" xmlns:adres="http://www.bahn.de/webservices/dritte/angebotsdetails/response" xmlns:asreq="http://www.bahn.de/webservices/dritte/angebotssuche/request" xmlns:asres="http://www.bahn.de/webservices/dritte/angebotssuche/response" xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" xmlns:monreq="http://www.bahn.de/webservices/dritte/monitoring/request" xmlns:monres="http://www.bahn.de/webservices/dritte/monitoring/response" xmlns:pingreq="http://www.bahn.de/webservices/dritte/ping/request" xmlns:pingres="http://www.bahn.de/webservices/dritte/ping/response" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified" targetNamespace="http://www.bahn.de/webservices/dritte">
+      <xs:import namespace="http://www.bahn.de/webservices/dritte/angebotssuche/request" schemaLocation="http://reiseauskunftdritte.bahn.de:80/webservices/reiseauskunft/v1?xsd=3"/>
+      <xs:import namespace="http://www.bahn.de/webservices/dritte/angebotssuche/response" schemaLocation="http://reiseauskunftdritte.bahn.de:80/webservices/reiseauskunft/v1?xsd=4"/>
+      <xs:import namespace="http://www.bahn.de/webservices/dritte/angebotsdetails/request" schemaLocation="http://reiseauskunftdritte.bahn.de:80/webservices/reiseauskunft/v1?xsd=1"/>
+      <xs:import namespace="http://www.bahn.de/webservices/dritte/angebotsdetails/response" schemaLocation="http://reiseauskunftdritte.bahn.de:80/webservices/reiseauskunft/v1?xsd=2"/>
+      <xs:import namespace="http://www.bahn.de/webservices/dritte/ping/request" schemaLocation="http://reiseauskunftdritte.bahn.de:80/webservices/reiseauskunft/v1?xsd=9"/>
+      <xs:import namespace="http://www.bahn.de/webservices/dritte/ping/response" schemaLocation="http://reiseauskunftdritte.bahn.de:80/webservices/reiseauskunft/v1?xsd=10"/>
+      <xs:import namespace="http://www.bahn.de/webservices/dritte/monitoring/request" schemaLocation="http://reiseauskunftdritte.bahn.de:80/webservices/reiseauskunft/v1?xsd=7"/>
+      <xs:import namespace="http://www.bahn.de/webservices/dritte/monitoring/response" schemaLocation="http://reiseauskunftdritte.bahn.de:80/webservices/reiseauskunft/v1?xsd=8"/>
+    </xs:schema>
+  </WL5G3N0:types>
+  <WL5G3N0:message name="AngebotssucheRequest">
+    <WL5G3N0:part element="WL5G3N1:AngebotssucheRequest" name="request"/>
+  </WL5G3N0:message>
+  <WL5G3N0:message name="AngebotssucheResponse">
+    <WL5G3N0:part element="WL5G3N2:AngebotssucheResponse" name="response"/>
+  </WL5G3N0:message>
+  <WL5G3N0:message name="AngebotsdetailsRequest">
+    <WL5G3N0:part element="WL5G3N3:AngebotsdetailsRequest" name="request"/>
+  </WL5G3N0:message>
+  <WL5G3N0:message name="AngebotsdetailsResponse">
+    <WL5G3N0:part element="WL5G3N4:AngebotsdetailsResponse" name="response"/>
+  </WL5G3N0:message>
+  <WL5G3N0:message name="PingRequest">
+    <WL5G3N0:part element="WL5G3N5:PingRequestRA" name="request"/>
+  </WL5G3N0:message>
+  <WL5G3N0:message name="PingResponse">
+    <WL5G3N0:part element="WL5G3N6:PingResponse" name="response"/>
+  </WL5G3N0:message>
+  <WL5G3N0:message name="MonitoringRequest">
+    <WL5G3N0:part element="WL5G3N7:MonitoringRequest" name="request"/>
+  </WL5G3N0:message>
+  <WL5G3N0:message name="MonitoringResponse">
+    <WL5G3N0:part element="WL5G3N8:MonitoringResponse" name="response"/>
+  </WL5G3N0:message>
+  <WL5G3N0:portType name="WSDReiseAuskunftPort">
+    <WL5G3N0:operation name="angebotssuche">
+      <WL5G3N0:input message="WL5G3N9:AngebotssucheRequest" name="angebotssucheRequest"/>
+      <WL5G3N0:output message="WL5G3N9:AngebotssucheResponse" name="angebotssucheResponse"/>
+    </WL5G3N0:operation>
+    <WL5G3N0:operation name="Angebotsdetails">
+      <WL5G3N0:input message="WL5G3N9:AngebotsdetailsRequest" name="AngebotsdetailsRequest"/>
+      <WL5G3N0:output message="WL5G3N9:AngebotsdetailsResponse" name="AngebotsdetailsResponse"/>
+    </WL5G3N0:operation>
+    <WL5G3N0:operation name="Ping">
+      <WL5G3N0:input message="WL5G3N9:PingRequest" name="PingRequest"/>
+      <WL5G3N0:output message="WL5G3N9:PingResponse" name="PingResponse"/>
+    </WL5G3N0:operation>
+    <WL5G3N0:operation name="Monitoring">
+      <WL5G3N0:input message="WL5G3N9:MonitoringRequest" name="MonitoringRequest"/>
+      <WL5G3N0:output message="WL5G3N9:MonitoringResponse" name="MonitoringResponse"/>
+    </WL5G3N0:operation>
+  </WL5G3N0:portType>
+  <WL5G3N0:binding name="WSDReiseAuskunftBinding" type="WL5G3N9:WSDReiseAuskunftPort">
+    <WL5G3N10:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+    <WL5G3N0:operation name="angebotssuche">
+      <WL5G3N10:operation soapAction="db.webservices.dritte" style="document"/>
+      <WL5G3N0:input>
+        <WL5G3N10:body use="literal"/>
+      </WL5G3N0:input>
+      <WL5G3N0:output>
+        <WL5G3N10:body use="literal"/>
+      </WL5G3N0:output>
+    </WL5G3N0:operation>
+    <WL5G3N0:operation name="Angebotsdetails">
+      <WL5G3N10:operation soapAction="db.webservices.dritte" style="document"/>
+      <WL5G3N0:input>
+        <WL5G3N10:body use="literal"/>
+      </WL5G3N0:input>
+      <WL5G3N0:output>
+        <WL5G3N10:body use="literal"/>
+      </WL5G3N0:output>
+    </WL5G3N0:operation>
+    <WL5G3N0:operation name="Ping">
+      <WL5G3N10:operation soapAction="db.webservices.dritte" style="document"/>
+      <WL5G3N0:input>
+        <WL5G3N10:body use="literal"/>
+      </WL5G3N0:input>
+      <WL5G3N0:output>
+        <WL5G3N10:body use="literal"/>
+      </WL5G3N0:output>
+    </WL5G3N0:operation>
+    <WL5G3N0:operation name="Monitoring">
+      <WL5G3N10:operation soapAction="db.webservices.dritte" style="document"/>
+      <WL5G3N0:input>
+        <WL5G3N10:body use="literal"/>
+      </WL5G3N0:input>
+      <WL5G3N0:output>
+        <WL5G3N10:body use="literal"/>
+      </WL5G3N0:output>
+    </WL5G3N0:operation>
+  </WL5G3N0:binding>
+  <WL5G3N0:service name="WSDReiseAuskunftInterface">
+    <WL5G3N0:port binding="WL5G3N9:WSDReiseAuskunftBinding" name="WSDReiseAuskunftPort">
+      <WL5G3N10:address location="http://reiseauskunftdritte.bahn.de:80/webservices/reiseauskunft/v1"/>
+    </WL5G3N0:port>
+  </WL5G3N0:service>
+</WL5G3N0:definitions>
