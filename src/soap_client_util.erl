@@ -55,7 +55,7 @@
     fault_parser :: fun(),
     parser_state :: any(),
     soap_headers = [] :: [string() | tuple()],
-    soap_body :: string(),
+    soap_body :: string() | tuple(),
     is_fault = false :: boolean(),
     namespaces = [] :: [{prefix(), uri()}]
 }).
