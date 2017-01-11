@@ -29,7 +29,7 @@
 -module(soap_cowboy_2_protocol).
 %%-behaviour(cowboy_sub_protocol).
 
--export([upgrade/6]).
+-export([upgrade/6, upgrade/7]).
 -export([enrich_req/2]).
 -export([respond/4]).
 
@@ -48,9 +48,17 @@
 -spec upgrade(Cowboy_req::cowboy_req(), Env::cowboy_env(),
               Soap_handler::module(), {Implementation_handler::module(), Options::any()},
               Timeout::any(), Hibernate::any()) -> {ok, cowboy_req(), cowboy_env()}. 
-upgrade(Cowboy_req, Env, Soap_handler, {Handler, Options}, _, _) ->
+upgrade(Cowboy_req, Env, Soap_handler, {Handler, Options}, Timeout, Hibernate) ->
+  {ok, Message, Cowboy_req2} = cowboy_req:body(Cowboy_req),
+  upgrade(Cowboy_req2, Env, Soap_handler, {Handler, Options}, Timeout, Hibernate, Message).
+
+%% There might exist middleware that reads body from the cowboy_req, in which 
+%% case it will be no longer available while calling upgrade/6. In this case
+%% you are responsible for propogating Body directly to upgrade/7
+upgrade(Cowboy_req, Env, Soap_handler, {Handler, Options}, _, _, Message) ->
   soap_cowboy_protocol:upgrade(Cowboy_req, Env, Soap_handler, 
-                               {Handler, Options}, cowboy_2, ?MODULE).
+                               {Handler, Options}, cowboy_2, ?MODULE, Message).
+
 
 enrich_req(Cowboy_req, Soap_req) ->
   Method = cowboy_req:method(Cowboy_req),
