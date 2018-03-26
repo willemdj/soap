@@ -9,6 +9,7 @@ compile:
 	@rebar compile
 
 ct: compile test_deps
+	mkdir -p ./logs
 	@echo "Running common tests..."
 	-@ct_run -noshell -pa ebin \
 		-pa deps/*/ebin \

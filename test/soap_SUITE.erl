@@ -930,7 +930,7 @@ cowboy_version() ->
     Info = cowboy:module_info(),
     Exports = proplists:get_value(exports, Info),
     case proplists:get_value(start_tls, Exports) of
-        4 ->
+        3 ->
             soap_server_cowboy_2;
         undefined ->
             soap_server_cowboy_1
