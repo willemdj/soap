@@ -25,7 +25,7 @@
     name :: string(),
     operation :: atom(), %% name of function as used in handler module
     soap_action = [] :: string(),
-    wrapper_ns = [] :: string(), %% namespace for the wrapper element (in 
+    wrapper_ns = [] :: string() | undefined, %% namespace for the wrapper element (in 
                                  %% case of rpc style)
     op_type :: notification | request_response,
     in_type :: [{string(), atom()}]  | atom(), %% the list type is only used
@@ -47,7 +47,7 @@
     target_ns :: string(),
     soap_ns :: string(),
     style :: string() | undefined, %% "rpc" | "document" 
-    decoders :: [{string(), module}], 
+    decoders :: [{string(), module}] | undefined, 
     url :: string(),
     port :: string(),
     binding :: string(),
